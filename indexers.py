@@ -1,30 +1,32 @@
-from loaders import HtmlDocumentLoader
+from loaders import DocLoader
 from preprocessors import GithubBlogpostPreprocessor, ArxivHtmlPaperPreprocessor
 from text_splitters import SimpleCharacterTextSplitter
 from wcs_client_adapter import WcsClientAdapter
 
-CACHE_PATH = "./loader_cache"
 CHUNK_SIZE = 150
 OVERLAP_SIZE = 25
 GITHUB_BLOG_POST = "https://lilianweng.github.io/posts/2023-06-23-agent/"
 ARXIV_RAG_SURVEY_PAPER = "https://arxiv.org/html/2312.10997v5"
 
 class NaiveIndexer:
-  def __init__(self):
-   pass 
 
-  def index(self, doc_uri):
-    self._loader = HtmlDocumentLoader(doc_uri, CACHE_PATH)
-    if doc_uri == GITHUB_BLOG_POST:
-      self._preprocessor = GithubBlogpostPreprocessor()
-    elif doc_uri == ARXIV_RAG_SURVEY_PAPER:
-      self._preprocessor = ArxivHtmlPaperPreprocessor()
-    else:
-      raise ValueError(f"Unsupported document URI: {doc_uri}. Expected URIs are GitHub blog post or arXiv RAG survey paper.") 
-    self._text_splitter = SimpleCharacterTextSplitter(CHUNK_SIZE, OVERLAP_SIZE)
+  @staticmethod
+  def index(doc_uri):
+    preprocessor = NaiveIndexer._get_preprocessor(doc_uri)
+    text_splitter = SimpleCharacterTextSplitter(CHUNK_SIZE, OVERLAP_SIZE)
     
-    document_content = self._loader.load()
-    cleaned_text = self._preprocessor.get_text(document_content)
-    text_splits = self._text_splitter.split_text(cleaned_text)
+    doc_content = DocLoader.load_html(doc_uri)
+    cleaned_text = preprocessor.get_text(doc_content)
+    text_splits = text_splitter.split_text(cleaned_text)
     WcsClientAdapter.setup_collection()
     WcsClientAdapter.insert_text_splits(text_splits)
+
+  @staticmethod
+  def _get_preprocessor(doc_uri):
+    if doc_uri == GITHUB_BLOG_POST:
+      preprocessor = GithubBlogpostPreprocessor()
+    elif doc_uri == ARXIV_RAG_SURVEY_PAPER:
+      preprocessor = ArxivHtmlPaperPreprocessor()
+    else:
+      raise ValueError(f"Unsupported document URI: {doc_uri}.") 
+    return preprocessor

@@ -1,4 +1,4 @@
-from loaders import HtmlDocumentLoader
+from loaders import DocLoader
 from preprocessors import GithubBlogpostPreprocessor, ArxivHtmlPaperPreprocessor
 from text_splitters import SimpleCharacterTextSplitter
 from wcs_client_adapter import WcsClientAdapter
