@@ -3,7 +3,7 @@ import weaviate
 from weaviate.auth import AuthApiKey
 from wcs_client_adapter import WcsClientAdapter
 
-class NaiveWcsRetriever:
+class NaiveRetriever:
   def __init__(self):
     self._client = None
   

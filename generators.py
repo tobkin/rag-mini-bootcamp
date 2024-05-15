@@ -2,7 +2,7 @@ from openai import OpenAI
 import os
 client = OpenAI()
 
-class Gpt35Generator:
+class NaiveGenerator:
   def __init__(self):
     self._validate_env_variables()
     self._system_prompt = f"""
