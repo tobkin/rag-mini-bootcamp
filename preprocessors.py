@@ -1,16 +1,32 @@
+from __future__ import annotations
+from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup, SoupStrainer
 
-class GithubBlogpostPreprocessor:
-    """
-    A class to preprocess HTML content from GitHub blog posts, focusing on specific
-    parts of the post like the title, header, and content.
-    """
-    def __init__(self):
+GITHUB_BLOG_POST = "https://lilianweng.github.io/posts/2023-06-23-agent/"
+ARXIV_RAG_SURVEY_PAPER = "https://arxiv.org/html/2312.10997v5"
+
+class Preprocessor(ABC):
+    @abstractmethod
+    def get_text(self, html_content: str) -> str:
         pass
-    
-    def get_text(self, html_content):
+
+    @staticmethod
+    def get_preprocessor(doc_uri: str) -> Preprocessor:
+        if doc_uri == GITHUB_BLOG_POST:
+            preprocessor = GithubBlogpostPreprocessor()
+        elif doc_uri == ARXIV_RAG_SURVEY_PAPER:
+            preprocessor = ArxivHtmlPaperPreprocessor()
+        else:
+            raise ValueError(f"Unsupported document URI: {doc_uri}.") 
+        return preprocessor
+
+class GithubBlogpostPreprocessor(Preprocessor):
+    def get_text(self, html_content: str) -> str:
         """
         Extracts and returns clean text from the post content, title, and header.
+
+        Args:
+            html_content (str): The HTML content to process.
 
         Returns:
             str: Cleaned text from specified parts of the HTML content.
@@ -18,14 +34,19 @@ class GithubBlogpostPreprocessor:
         only_post_text = SoupStrainer(class_=["post-content", "post-title", "post-header"])
         soup = BeautifulSoup(html_content, "html.parser", parse_only=only_post_text)
         cleaned_text = soup.get_text()
-        
         return cleaned_text
 
-class ArxivHtmlPaperPreprocessor:
-    def __init__(self):
-        pass
-        
-    def get_text(self, html_content):
+class ArxivHtmlPaperPreprocessor(Preprocessor):
+    def get_text(self, html_content: str) -> str:
+        """
+        Extracts and returns clean text from the title, authors, affiliations, abstract, and sections.
+
+        Args:
+            html_content (str): The HTML content to process.
+
+        Returns:
+            str: Cleaned text from specified parts of the HTML content.
+        """
         title = self._extract_title(html_content)
         authors_affiliations = self._extract_authors_and_affiliations(html_content)
         abstract = self._extract_abstract(html_content)
@@ -37,17 +58,15 @@ class ArxivHtmlPaperPreprocessor:
             sections.append(section_text)
 
         cleaned_text = title + "\n\n" + authors_affiliations + "\n\n" + abstract + "\n\n" + "\n\n".join(sections)
-        
         return cleaned_text
 
-
-    def _extract_title(self, html_content):
+    def _extract_title(self, html_content: str) -> str:
         strainer = SoupStrainer('h1', class_="ltx_title ltx_title_document")
         soup = BeautifulSoup(html_content, 'html.parser', parse_only=strainer)
         title_text = soup.get_text()
         return title_text
     
-    def _extract_authors_and_affiliations(self, html_content):
+    def _extract_authors_and_affiliations(self, html_content: str) -> str:
         strainer = SoupStrainer('div', class_="ltx_authors")
         soup = BeautifulSoup(html_content, 'html.parser', parse_only=strainer)
 
@@ -59,7 +78,7 @@ class ArxivHtmlPaperPreprocessor:
         output_text = "\n".join(formatted_output)
         return output_text
     
-    def _extract_abstract(self, html_content):
+    def _extract_abstract(self, html_content: str) -> str:
         soup = BeautifulSoup(html_content, 'html.parser')
         abstract_div = soup.find('div', class_='ltx_abstract')
         
@@ -75,7 +94,7 @@ class ArxivHtmlPaperPreprocessor:
                 return f"{abstract_title_text}\n\n{abstract_paragraph.get_text(strip=True)}"
         return "Abstract not found"
     
-    def _extract_section_with_subheadings(self, html_content, section_id):
+    def _extract_section_with_subheadings(self, html_content: str, section_id: str) -> str:
         soup = BeautifulSoup(html_content, 'html.parser')
         section = soup.find('section', id=section_id)
         

@@ -7,7 +7,7 @@ CACHE_PATH = "./loader_cache"
 class DocLoader:
 
     @staticmethod
-    def load_html(uri):
+    def load_html(uri: str) -> str:
         """
         Loads the HTML document from the specified URI into the `doc` attribute.
         If the document exists in cache, load it from there.
