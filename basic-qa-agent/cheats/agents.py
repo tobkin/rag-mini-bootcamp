@@ -1,0 +1,2 @@
+class NaiveQaRagAgent:
+  pass
