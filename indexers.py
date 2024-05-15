@@ -10,8 +10,10 @@ GITHUB_BLOG_POST = "https://lilianweng.github.io/posts/2023-06-23-agent/"
 ARXIV_RAG_SURVEY_PAPER = "https://arxiv.org/html/2312.10997v5"
 
 class NaiveIndexer:
-  def __init__(self, doc_uri):  # TODO: this calling syntax doesn't make it clear what side effects the constructor has
-    
+  def __init__(self):
+   pass 
+
+  def index(self, doc_uri):
     self._loader = HtmlDocumentLoader(doc_uri, CACHE_PATH)
     if doc_uri == GITHUB_BLOG_POST:
       self._preprocessor = GithubBlogpostPreprocessor()
