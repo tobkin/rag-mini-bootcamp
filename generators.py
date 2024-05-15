@@ -1,14 +1,20 @@
 from openai import OpenAI
+import os
 client = OpenAI()
 
 class Gpt35Generator:
   def __init__(self):
+    self._validate_env_variables()
     self._system_prompt = f"""
       You are an assistant for question-answering tasks. 
       Use the following pieces of retrieved context to answer the question. 
       If you don't know the answer, just say that you don't know. 
       Use three sentences maximum and keep the answer concise.
       """
+      
+  def _validate_env_variables(self):
+    if not os.getenv('OPENAI_API_KEY'):
+        raise EnvironmentError("Environment variable 'OPENAI_API_KEY' not set. Please ensure it is defined in your .env file.")
 
   def _generation_prompt(self, question, context): 
     return f"""

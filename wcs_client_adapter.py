@@ -13,6 +13,7 @@ class WcsClientAdapter():
 
   @staticmethod
   def get_wcs_client():
+    WcsClientAdapter._validate_env_variables()
     return weaviate.connect_to_wcs(
             cluster_url = WCS_URL,
             auth_credentials=AuthApiKey(api_key = WCS_API_KEY),
@@ -20,6 +21,13 @@ class WcsClientAdapter():
                 "X-OpenAI-Api-Key": OPENAI_API_KEY
             }
         ) 
+  
+  @staticmethod  
+  def _validate_env_variables():
+    required_env_vars = ['WCS_URL', 'WCS_API_KEY']
+    for var in required_env_vars:
+      if not os.getenv(var):
+        raise EnvironmentError(f"Environment variable '{var}' not set. Please ensure it is defined in your .env file.")
     
   @staticmethod
   def setup_collection():

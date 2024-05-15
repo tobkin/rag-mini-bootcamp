@@ -9,7 +9,7 @@ OVERLAP_SIZE = 25
 GITHUB_BLOG_POST = "https://lilianweng.github.io/posts/2023-06-23-agent/"
 ARXIV_RAG_SURVEY_PAPER = "https://arxiv.org/html/2312.10997v5"
 
-class NaiveWcsIndexer:
+class NaiveIndexer:
   def __init__(self, doc_uri):  # TODO: this calling syntax doesn't make it clear what side effects the constructor has
     
     self._loader = HtmlDocumentLoader(doc_uri, CACHE_PATH)
