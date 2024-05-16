@@ -2,6 +2,9 @@ from indexers import NaiveIndexer
 from retrievers import NaiveRetriever
 from generators import NaiveGenerator
 
+EMBEDDING_MODEL = "text-embedding-3-small"
+# EMBEDDING_MODEL = "text-embedding-ada-002"
+
 class NaiveQaRagAgent:
   """
   A RAG (Retrieval-Augmented Generation) agent designed for question answering
@@ -18,9 +21,9 @@ class NaiveQaRagAgent:
       _retrieve: Retrieves context based on a query.
       _generate: Generates an answer based on a query and context.
   """
-  def __init__(self):
-    self._indexer = NaiveIndexer()
-    self._retriever = NaiveRetriever
+  def __init__(self, use_wcs_vectorizer: bool):
+    self._indexer = NaiveIndexer(use_wcs_vectorizer, EMBEDDING_MODEL)
+    self._retriever = NaiveRetriever(use_wcs_vectorizer, EMBEDDING_MODEL)
     self._generator = NaiveGenerator()
     
   def index(self, html_uri: str) -> None:

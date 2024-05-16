@@ -4,8 +4,10 @@
         [x] retrieve_top_k_chunks
         [ ] typing
         <!-- [ ] make a different collection for each document -->
+[ ] Apply style rules to all files
+[ ] inject EMBEDDING_MODEL
 [ ] Move files into "cheats"
-[ ] Add query vectorization
+[*] Add query vectorization
 [ ] Write tutorial
 
 
