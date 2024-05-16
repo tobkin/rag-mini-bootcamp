@@ -1,6 +1,8 @@
 from openai import OpenAI
+
 import os
-client = OpenAI()
+
+OPENAI_CLIENT = OpenAI()
 
 class NaiveGenerator:
   def __init__(self):
@@ -24,7 +26,7 @@ class NaiveGenerator:
       """
 
   def get_completion(self, question, context):
-    completion_obj = client.chat.completions.create(
+    completion_obj = OPENAI_CLIENT.chat.completions.create(
       model="gpt-3.5-turbo",
       messages=[
         {
