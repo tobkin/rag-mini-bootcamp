@@ -11,17 +11,9 @@ WCS_COLLECTION_NAME = "QaAgentRagChunks"
 COLLECTION_TEXT_KEY = "chunk"
 
 class WcsClientAdapter():
-  
-  def __init__(self, use_wcs_vectorizer: bool):
-    self._use_wcs_vectorizer = use_wcs_vectorizer
 
   def setup_collection(self) -> None:
     client = self._get_wcs_client() 
-    if self._use_wcs_vectorizer:
-      vectorizer = config.Configure.Vectorizer.text2vec_openai()
-    else:
-      vectorizer = None
-      
     try:
         if client.collections.exists(WCS_COLLECTION_NAME):
             client.collections.delete(WCS_COLLECTION_NAME) 
@@ -31,30 +23,12 @@ class WcsClientAdapter():
             properties=[
                 config.Property(name=COLLECTION_TEXT_KEY, data_type=config.DataType.TEXT),
                 config.Property(name="chunk_index", data_type=config.DataType.INT),
-            ],
-            vectorizer_config=vectorizer
+            ]
         )
     finally:
         client.close()
         
-  def insert_text_splits(self, text_splits, text_split_vectors=None) -> None:
-    client = self._get_wcs_client()
-    chunks_list = []
-    for i in range(len(text_splits)):
-        data_properties = {
-            "chunk": text_splits[i],
-            "chunk_index": i
-        }
-        data_object = data.DataObject(
-          properties=data_properties
-        )
-        chunks_list.append(data_object)
-    try:
-      client.collections.get(WCS_COLLECTION_NAME).data.insert_many(chunks_list)
-    finally:
-      client.close()
-  
-  def insert_text_split_vectors(self, text_splits, text_split_vectors) -> None:
+  def insert(self, text_splits, text_split_vectors) -> None:
     assert len(text_splits) == len(text_split_vectors)
     client = self._get_wcs_client()  
     chunks_list = []
@@ -83,7 +57,7 @@ class WcsClientAdapter():
     finally:
       client.close()
       
-  def retrieve_by_query_vector(self, query_vector: List[float], k: int) -> List[str]:
+  def retrieve(self, query_vector: List[float], k: int) -> List[str]:
     client = self._get_wcs_client() 
     try:
       all_chunks = client.collections.get(WCS_COLLECTION_NAME)

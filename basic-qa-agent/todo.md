@@ -1,14 +1,6 @@
-[x] Test old code
-[ ] Refactor away tech debt
-    [ ] WcsClientAdapter
-        [x] retrieve_top_k_chunks
-        [x] typing
-        [ ] instantiate
-        <!-- [ ] make a different collection for each document -->
+[x] Extract vectorizer
 [ ] Apply style rules to all files
-[ ] inject EMBEDDING_MODEL
 [ ] Move files into "cheats"
-[*] Add query vectorization
 [ ] Write tutorial
 
 

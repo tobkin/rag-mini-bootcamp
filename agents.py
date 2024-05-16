@@ -1,29 +1,13 @@
+from vectorizers import Vectorizer
 from indexers import NaiveIndexer
 from retrievers import NaiveRetriever
 from generators import NaiveGenerator
 
-EMBEDDING_MODEL = "text-embedding-3-small"
-# EMBEDDING_MODEL = "text-embedding-ada-002"
-
 class NaiveQaRagAgent:
-  """
-  A RAG (Retrieval-Augmented Generation) agent designed for question answering
-  on a single HTML file.
-
-  This agent can parse an HTML file and provide answers to questions based on 
-  the content of that file.
-
-  Methods:
-      __init__: Initializes the NaiveQaHtmlRagAgent instance.
-      index: Indexes an HTML file.
-      delete_index: Deletes the current index.
-      query: Processes a query to provide an answer.
-      _retrieve: Retrieves context based on a query.
-      _generate: Generates an answer based on a query and context.
-  """
-  def __init__(self, use_wcs_vectorizer: bool):
-    self._indexer = NaiveIndexer(use_wcs_vectorizer, EMBEDDING_MODEL)
-    self._retriever = NaiveRetriever(use_wcs_vectorizer, EMBEDDING_MODEL)
+  def __init__(self):
+    vectorizer = Vectorizer()
+    self._indexer = NaiveIndexer(vectorizer)
+    self._retriever = NaiveRetriever(vectorizer)
     self._generator = NaiveGenerator()
     
   def index(self, html_uri: str) -> None:
@@ -39,3 +23,4 @@ class NaiveQaRagAgent:
   
   def _generate(self, query: str, context: str) -> str:
       return self._generator.get_completion(query, context)
+  
