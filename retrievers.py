@@ -24,7 +24,7 @@ class NaiveRetriever:
   @staticmethod
   def vectorize(query: str) -> List[float]:
     response = client.embeddings.create(
-      input="query",
+      input=query,
       model=EMBEDDING_MODEL
     )
     query_vector = response.data[0].embedding
