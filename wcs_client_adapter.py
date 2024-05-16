@@ -11,11 +11,13 @@ WCS_COLLECTION_NAME = "QaAgentRagChunks"
 COLLECTION_TEXT_KEY = "chunk"
 
 class WcsClientAdapter():
+  
+  def __init__(self, use_wcs_vectorizer: bool):
+    self._use_wcs_vectorizer = use_wcs_vectorizer
 
-  @staticmethod
-  def setup_collection(use_wcs_vectorizer: bool) -> None:
-    client = WcsClientAdapter._get_wcs_client() 
-    if use_wcs_vectorizer:
+  def setup_collection(self) -> None:
+    client = self._get_wcs_client() 
+    if self._use_wcs_vectorizer:
       vectorizer = config.Configure.Vectorizer.text2vec_openai()
     else:
       vectorizer = None
@@ -35,26 +37,26 @@ class WcsClientAdapter():
     finally:
         client.close()
         
-  @staticmethod
-  def insert_text_splits(text_splits) -> None:
-    client = WcsClientAdapter._get_wcs_client()
+  def insert_text_splits(self, text_splits, text_split_vectors=None) -> None:
+    client = self._get_wcs_client()
     chunks_list = []
-    for i, chunk in enumerate(text_splits):
+    for i in range(len(text_splits)):
         data_properties = {
-            "chunk": chunk,
+            "chunk": text_splits[i],
             "chunk_index": i
         }
-        data_object = data.DataObject(properties=data_properties)
-        chunks_list.append(data_object)  
+        data_object = data.DataObject(
+          properties=data_properties
+        )
+        chunks_list.append(data_object)
     try:
       client.collections.get(WCS_COLLECTION_NAME).data.insert_many(chunks_list)
     finally:
       client.close()
   
-  @staticmethod
-  def insert_text_split_vectors(text_splits, text_split_vectors) -> None:
+  def insert_text_split_vectors(self, text_splits, text_split_vectors) -> None:
     assert len(text_splits) == len(text_split_vectors)
-    client = WcsClientAdapter._get_wcs_client()  
+    client = self._get_wcs_client()  
     chunks_list = []
     for i in range(len(text_splits)):
         data_properties = {
@@ -64,16 +66,15 @@ class WcsClientAdapter():
         data_object = data.DataObject(
           properties=data_properties,
           vector=text_split_vectors[i]
-          )
+        )
         chunks_list.append(data_object)
     try:
       client.collections.get(WCS_COLLECTION_NAME).data.insert_many(chunks_list)
     finally:
       client.close()
   
-  @staticmethod   
-  def retrieve_top_k_chunks(question: str, k: int) -> List[str]:
-    client = WcsClientAdapter._get_wcs_client() 
+  def retrieve_by_query(self, question: str, k: int) -> List[str]:
+    client = self._get_wcs_client() 
     try:
       all_chunks = client.collections.get(WCS_COLLECTION_NAME)
       retrieved_chunks = all_chunks.query.near_text(query=question, limit=k)
@@ -82,9 +83,8 @@ class WcsClientAdapter():
     finally:
       client.close()
       
-  @staticmethod   
-  def retrieve_top_k_chunks_by_vector(query_vector: List[float], k: int) -> List[str]:
-    client = WcsClientAdapter._get_wcs_client() 
+  def retrieve_by_query_vector(self, query_vector: List[float], k: int) -> List[str]:
+    client = self._get_wcs_client() 
     try:
       all_chunks = client.collections.get(WCS_COLLECTION_NAME)
       retrieved_chunks = all_chunks.query.near_vector(near_vector=query_vector, limit=k)
@@ -93,18 +93,16 @@ class WcsClientAdapter():
     finally:
       client.close()
   
-  @staticmethod
-  def count_entries() -> int:
-      client = WcsClientAdapter._get_wcs_client() 
+  def count_entries(self) -> int:
+      client = self._get_wcs_client() 
       try:
         response = client.collections.get(WCS_COLLECTION_NAME).aggregate.over_all(total_count=True)
         return response.total_count
       finally:
         client.close()
 
-  @staticmethod
-  def _get_wcs_client():
-    WcsClientAdapter._validate_env_variables()
+  def _get_wcs_client(self) -> any:
+    self._validate_env_variables()
     return weaviate.connect_to_wcs(
             cluster_url = WCS_URL,
             auth_credentials=AuthApiKey(api_key = WCS_API_KEY),
@@ -113,8 +111,7 @@ class WcsClientAdapter():
             }
         ) 
   
-  @staticmethod  
-  def _validate_env_variables():
+  def _validate_env_variables(self) -> None:
     required_env_vars = ['WCS_URL', 'WCS_API_KEY']
     for var in required_env_vars:
       if not os.getenv(var):

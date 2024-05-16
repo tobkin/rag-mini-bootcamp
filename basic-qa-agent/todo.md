@@ -2,7 +2,8 @@
 [ ] Refactor away tech debt
     [ ] WcsClientAdapter
         [x] retrieve_top_k_chunks
-        [ ] typing
+        [x] typing
+        [ ] instantiate
         <!-- [ ] make a different collection for each document -->
 [ ] Apply style rules to all files
 [ ] inject EMBEDDING_MODEL
