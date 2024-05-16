@@ -20,7 +20,7 @@ class NaiveQaRagAgent:
   """
   def __init__(self):
     self._indexer = NaiveIndexer()
-    self._retriever = NaiveRetriever()
+    self._retriever = NaiveRetriever
     self._generator = NaiveGenerator()
     
   def index(self, html_uri: str) -> None:

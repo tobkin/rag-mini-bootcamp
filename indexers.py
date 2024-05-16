@@ -6,7 +6,6 @@ from wcs_client_adapter import WcsClientAdapter
 CHUNK_SIZE = 150
 OVERLAP_SIZE = 25
 
-
 class NaiveIndexer:
 
   @staticmethod

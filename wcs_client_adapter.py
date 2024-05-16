@@ -1,5 +1,6 @@
 import os
 import weaviate
+from typing import List
 from weaviate.auth import AuthApiKey
 from weaviate.classes import config, data
 
@@ -12,26 +13,8 @@ COLLECTION_TEXT_KEY = "chunk"
 class WcsClientAdapter():
 
   @staticmethod
-  def get_wcs_client():
-    WcsClientAdapter._validate_env_variables()
-    return weaviate.connect_to_wcs(
-            cluster_url = WCS_URL,
-            auth_credentials=AuthApiKey(api_key = WCS_API_KEY),
-            headers={
-                "X-OpenAI-Api-Key": OPENAI_API_KEY
-            }
-        ) 
-  
-  @staticmethod  
-  def _validate_env_variables():
-    required_env_vars = ['WCS_URL', 'WCS_API_KEY']
-    for var in required_env_vars:
-      if not os.getenv(var):
-        raise EnvironmentError(f"Environment variable '{var}' not set. Please ensure it is defined in your .env file.")
-    
-  @staticmethod
-  def setup_collection():
-    client = WcsClientAdapter.get_wcs_client() 
+  def setup_collection() -> None:
+    client = WcsClientAdapter._get_wcs_client() 
     try:
         if client.collections.exists(WCS_COLLECTION_NAME):
             client.collections.delete(WCS_COLLECTION_NAME) 
@@ -48,8 +31,8 @@ class WcsClientAdapter():
         client.close()
         
   @staticmethod
-  def insert_text_splits(text_splits):
-    client = WcsClientAdapter.get_wcs_client()  
+  def insert_text_splits(text_splits) -> None:
+    client = WcsClientAdapter._get_wcs_client()  
     try:
       chunks_list = []
       for i, chunk in enumerate(text_splits):
@@ -63,23 +46,72 @@ class WcsClientAdapter():
     finally:
       client.close()
   
-  @staticmethod   
-  def retrieve_top_5_chunks(question):
-    client = WcsClientAdapter.get_wcs_client() 
+  @staticmethod
+  def insert_text_split_vectors(text_splits_with_vectors) -> None:
+    client = WcsClientAdapter._get_wcs_client()  
     try:
-      top_k = 5
+      chunks_list = []
+      for i, chunk, vector in enumerate(text_splits_with_vectors):
+          data_properties = {
+              "chunk": chunk,
+              "chunk_index": i
+          }
+          data_object = data.DataObject(
+            properties=data_properties,
+            vector=vector
+            )
+          chunks_list.append(data_object)
+      client.collections.get(WCS_COLLECTION_NAME).data.insert_many(chunks_list)
+    finally:
+      client.close()
+  
+  @staticmethod   
+  def retrieve_top_k_chunks(question: str, k: int) -> List[str]:
+    client = WcsClientAdapter._get_wcs_client() 
+    try:
       all_chunks = client.collections.get(WCS_COLLECTION_NAME)
-      retrieved_chunks = all_chunks.query.near_text(query=question, limit=top_k)
+      retrieved_chunks = all_chunks.query.near_text(query=question, limit=k)
+      retrieved_chunks_list = [obj.properties['chunk'] for obj in retrieved_chunks.objects]
+      return retrieved_chunks_list
+    finally:
+      client.close()
+
+      
+  @staticmethod   
+  def retrieve_top_k_chunks_by_vector(query_vector: List[float], k: int) -> List[str]:
+    client = WcsClientAdapter._get_wcs_client() 
+    try:
+      all_chunks = client.collections.get(WCS_COLLECTION_NAME)
+      retrieved_chunks = all_chunks.query.near_vector(near_vector=query_vector, limit=k)
       retrieved_chunks_list = [obj.properties['chunk'] for obj in retrieved_chunks.objects]
       return retrieved_chunks_list
     finally:
       client.close()
   
   @staticmethod
-  def count_entries():
-      client = WcsClientAdapter.get_wcs_client() 
+  def count_entries() -> int:
+      client = WcsClientAdapter._get_wcs_client() 
       try:
         response = client.collections.get(WCS_COLLECTION_NAME).aggregate.over_all(total_count=True)
         return response.total_count
       finally:
         client.close()
+
+  @staticmethod
+  def _get_wcs_client():
+    WcsClientAdapter._validate_env_variables()
+    return weaviate.connect_to_wcs(
+            cluster_url = WCS_URL,
+            auth_credentials=AuthApiKey(api_key = WCS_API_KEY),
+            headers={
+                "X-OpenAI-Api-Key": OPENAI_API_KEY
+            }
+        ) 
+  
+  @staticmethod  
+  def _validate_env_variables():
+    required_env_vars = ['WCS_URL', 'WCS_API_KEY']
+    for var in required_env_vars:
+      if not os.getenv(var):
+        raise EnvironmentError(f"Environment variable '{var}' not set. Please ensure it is defined in your .env file.")
+    
