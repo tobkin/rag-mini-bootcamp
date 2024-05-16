@@ -1,7 +1,7 @@
 from openai import OpenAI
 
-from vectorizers import Vectorizer
-from wcs_client_adapter import WcsClientAdapter
+from common_components.vectorizers import Vectorizer
+from common_components.wcs_client_adapter import WcsClientAdapter
 
 class NaiveRetriever:
   

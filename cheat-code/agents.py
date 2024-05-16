@@ -1,4 +1,4 @@
-from vectorizers import Vectorizer
+from common_components.vectorizers import Vectorizer
 from indexers import NaiveIndexer
 from retrievers import NaiveRetriever
 from generators import NaiveGenerator

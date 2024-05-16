@@ -1,8 +1,8 @@
-from loaders import DocLoader
-from preprocessors import Preprocessor
-from vectorizers import Vectorizer
-from text_splitters import SimpleCharacterTextSplitter
-from wcs_client_adapter import WcsClientAdapter
+from indexer_components.loaders import DocLoader
+from indexer_components.preprocessors import Preprocessor
+from common_components.vectorizers import Vectorizer
+from indexer_components.text_splitters import SimpleCharacterTextSplitter
+from common_components.wcs_client_adapter import WcsClientAdapter
 
 CHUNK_SIZE = 250
 OVERLAP_SIZE = 25
