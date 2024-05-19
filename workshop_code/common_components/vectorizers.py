@@ -7,19 +7,14 @@ EMBEDDING_MODEL = "text-embedding-3-small"
 
 class Vectorizer:
     def vectorize_text_splits(self, text_splits: List[str]) -> List[List[float]]:
-        response = OPENAI_CLIENT.embeddings.create(
-            input=text_splits,
-            model=EMBEDDING_MODEL
-        )
+        raise NotImplementedError("Implement this method and delete this exception.")
+        # response = ???  # TODO: write the API call to the OpenAI Embeddings API
         embeddings = []
-        for obj in response.data:
-            embeddings.append(obj.embedding)
+        # TODO: build the embeddings list from OpenAI's HTTP response
         return embeddings
     
     def vectorize_query(self, query: str) -> List[float]:
-        response = OPENAI_CLIENT.embeddings.create(
-            input=query,
-            model=EMBEDDING_MODEL
-        )
+        raise NotImplementedError("Implement this method and delete this exception.")
+        # response = ???  # TODO: write the API call to the OpenAI Embeddings API
         query_vector = response.data[0].embedding
         return query_vector

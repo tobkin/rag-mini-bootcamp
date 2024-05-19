@@ -21,7 +21,9 @@ class DocLoader:
         hasher = hashlib.sha256()
         hasher.update(uri.encode('utf-8'))
         hash_filename = hasher.hexdigest()
-        cached_file_path = os.path.join(CACHE_PATH, hash_filename)
+        short_hash = hash_filename[:4]
+        filename = f"{short_hash}-{uri.split('/')[-1]}.html"
+        cached_file_path = os.path.join(CACHE_PATH, filename)
 
         if os.path.exists(cached_file_path):
             with open(cached_file_path, 'r', encoding='utf-8') as file:
