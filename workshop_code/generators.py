@@ -7,11 +7,9 @@ OPENAI_CLIENT = OpenAI()
 class NaiveGenerator:
   def __init__(self):
     self._validate_env_variables()
+    # TODO: fill in the system prompt
     self._system_prompt = f"""
-      You are an assistant for question-answering tasks. 
-      Use the following pieces of retrieved context to answer the question. 
-      If you don't know the answer, just say that you don't know. 
-      Use three sentences maximum and keep the answer concise.
+      
       """
       
   def _validate_env_variables(self):
@@ -19,10 +17,9 @@ class NaiveGenerator:
         raise EnvironmentError("Environment variable 'OPENAI_API_KEY' not set. Please ensure it is defined in your .env file.")
 
   def _generation_prompt(self, question, context): 
+    # TODO: fill in the prompt
     return f"""
-      Question: {question}
-      Context: {context}
-      Answer:
+      
       """
 
   def get_completion(self, question, context):

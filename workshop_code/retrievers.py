@@ -1,5 +1,3 @@
-from openai import OpenAI
-
 from common_components.vectorizers import Vectorizer
 from common_components.wcs_client_adapter import WcsClientAdapter
 
