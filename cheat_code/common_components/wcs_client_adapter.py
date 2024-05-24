@@ -47,16 +47,6 @@ class WcsClientAdapter():
     finally:
       client.close()
   
-  def retrieve_by_query(self, question: str, k: int) -> List[str]:
-    client = self._get_wcs_client() 
-    try:
-      all_chunks = client.collections.get(WCS_COLLECTION_NAME)
-      retrieved_chunks = all_chunks.query.near_text(query=question, limit=k)
-      retrieved_chunks_list = [obj.properties['chunk'] for obj in retrieved_chunks.objects]
-      return retrieved_chunks_list
-    finally:
-      client.close()
-      
   def retrieve(self, query_vector: List[float], k: int) -> List[str]:
     client = self._get_wcs_client() 
     try:
