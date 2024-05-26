@@ -1,5 +1,5 @@
-from common_components.vectorizers import Vectorizer
-from common_components.wcs_client_adapter import WcsClientAdapter
+from cheat_code.common_components.vectorizers import Vectorizer
+from cheat_code.common_components.wcs_client_adapter import WcsClientAdapter
 
 class NaiveRetriever:
   

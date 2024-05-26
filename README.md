@@ -8,6 +8,7 @@ Understanding Naive RAG architecture is the first step towards understanding mor
 # Repo Structure
 ```
 .
+├── query_qa_rag_agent.ipynb    # The end result you want
 ├── 1 dev machine setup.ipynb   # Start here
 ├── 2 indexer.ipynb # Tutorial 2
 ├── 3 retriever.ipynb # Tutorial 3

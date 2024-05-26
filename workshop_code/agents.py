@@ -1,7 +1,7 @@
-from common_components.vectorizers import Vectorizer
-from indexers import NaiveIndexer
-from retrievers import NaiveRetriever
-from generators import NaiveGenerator
+from workshop_code.common_components.vectorizers import Vectorizer
+from workshop_code.indexers import NaiveIndexer
+from workshop_code.retrievers import NaiveRetriever
+from workshop_code.generators import NaiveGenerator
 
 class NaiveQaRagAgent:
   def __init__(self):
