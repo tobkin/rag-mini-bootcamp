@@ -2,7 +2,7 @@ from workshop_code.indexer_components.loaders import DocLoader
 from workshop_code.indexer_components.preprocessors import Preprocessor
 from workshop_code.common_components.vectorizers import Vectorizer
 from workshop_code.indexer_components.text_splitters import SimpleCharacterTextSplitter
-from workshop_code.common_components.wcs_client_adapter import WcsClientAdapter
+from workshop_code.common_components.vectordb_client_adapters import WcsClientAdapter
 
 CHUNK_SIZE = 250
 OVERLAP_SIZE = 25

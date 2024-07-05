@@ -1,5 +1,5 @@
 from workshop_code.common_components.vectorizers import Vectorizer
-from workshop_code.common_components.wcs_client_adapter import WcsClientAdapter
+from workshop_code.common_components.vectordb_client_adapters import WcsClientAdapter
 
 class NaiveRetriever:
   
