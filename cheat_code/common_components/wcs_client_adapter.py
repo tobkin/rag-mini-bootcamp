@@ -12,7 +12,7 @@ COLLECTION_TEXT_KEY = "chunk"
 
 class WcsClientAdapter():
 
-  def setup_collection(self) -> None:
+  def setup_index(self) -> None:
     client = self._get_wcs_client() 
     try:
         if client.collections.exists(WCS_COLLECTION_NAME):
