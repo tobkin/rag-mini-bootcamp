@@ -16,7 +16,4 @@
     }
   },
   "workspaceFolder": "/workspaces/rag-mini-bootcamp",
-  "runArgs": [
-    // "--env-file", "/workspaces/rag-mini-bootcamp/.env"
-  ]
 }
