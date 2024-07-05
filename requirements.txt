@@ -1,4 +1,5 @@
 bs4
+ipykernel
 jinja2
 lxml
 openai

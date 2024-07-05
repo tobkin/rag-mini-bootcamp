@@ -1,11 +1,15 @@
 # Dev Machine Setup
 
 ## Install Docker
-Your development environment will be in a dev container to eliminate "works on my machine" issues. Due to variability in how individual developers configure their base OS, around 50% of course attendees have environment-related issues completing the tutorial if using their base OS instead of a container.
+Your development environment will be in a VSCode Dev Container to eliminate "works on my machine" issues. Due to variability in how individual developers configure their base OS, around 50% of course attendees have environment-related issues completing the tutorial if using their base OS instead of a container.
 
-On a clean OS configuration, Python venv will also work. However, it will not be supported by instructors or TAs during the live course due to variability in OS configurations.
+On a clean OS configuration, Python venv will also work. If you are familiar with using venv and are confident your OS doesn't have a conflicting environment manager like conda persistent, you may use venv instead.
 
 Recent OS distributions no longer support system-level installation of Python packages.
+
+If you want to push your changes to your own fork, note that your SSH settings won't be copied to your Dev Container. So, you'll need to push your changes from outside the container on your local machine. Technically, SSH can be configured, but I didn't have time to figure out how to make SSH on Dev Container automatically work on both Windows and Mac.
+
+If you want to inspect the environment configuration, check out the folder ".devcontainer/". Feel free to ask any questions.
 
 ## Install VSCode
 We will use VSCode for this tutorial because it supports both Python Notebooks and standard Python editing. Although other editors have their merits, VSCode is also the most standard editor in 2024. The containerized development environment is only tested to work with VSCode. You must use VSCode to get instructor or TA support during the workshop. 
@@ -69,4 +73,6 @@ First, you'll fill in the WCS keys. Go to Weaviate Cloud Services, create a free
 Second, go to OpenAI API settings. Create a new API key and copy it to the `.env` file. If you're out of free trial credits, purchase $5 of credits.
 
 # Test Your Environment
-Open `./cheat-code/query_qa_rag_agent.ipynb` in VSCode. Click "Run All" and select the `venv` python environment if prompted. The notebook should display a GPT3.5 completion to the question about the paper. If you get an error, try to diagnose it or flag one of us for help.
+Open the folder "rag-mini-bootcamp" in VSCode. Open the folder in Dev Container mode by using Cmd/Ctrl + Shift + P > Dev Containers: Open Folder in Container. The first time, the container will take some time to build while it downloads the required packages.
+
+Once the container is finished building, open `./cheat-code/query_qa_rag_agent.ipynb` in VSCode. Click "Run All" and select the `venv` python environment if prompted. The notebook should display a GPT3.5 completion to the question about the paper. If you get an error, try to diagnose it or flag one of us for help.
