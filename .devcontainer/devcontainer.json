@@ -1,0 +1,15 @@
+{
+    "name": "Python Dev Container",
+    "dockerFile": "Dockerfile",
+    "context": "..",
+    "extensions": [
+      "ms-python.python",
+      "ms-python.vscode-pylance"
+    ],
+    "settings": {
+      "python.pythonPath": "/usr/local/bin/python"
+    },
+    "workspaceFolder": "/app",
+    "runArgs": ["--env-file", "../.env"]
+  }
+  
