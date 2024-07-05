@@ -3,5 +3,6 @@ ipykernel
 jinja2
 lxml
 openai
+pinecone-client
 python-dotenv
 weaviate-client

@@ -83,20 +83,27 @@ pip install -r requirements.txt
 ``` -->
 
 ## .env File Setup
-We will use OpenAI embeddings, GPT3.5, and Weaviate Cloud Services vector database for this tutorial, so you will need to securely store your API keys in a `.env` file. This file is in `.gitignore` so it doesn't accidentally get committed to the repo where your keys would be exposed.  
+We will use OpenAI embeddings, GPT3.5, and Pinecone vector database for this tutorial, so you will need to securely store your API keys in a `.env` file. This file is in `.gitignore` so it doesn't accidentally get committed to the repo where your keys would be exposed.  
 
 Create a `.env` file in the root of the repo from this template:  
 ```
-WCS_URL=https://xxxxx-xxxxxxxx.weaviate.network
-WCS_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxx
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+PINECONE_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-First, you'll fill in the WCS keys. Go to Weaviate Cloud Services, create a free sandbox vector database, and copy the URL and API key provided in the dashboard for the sandbox to the `.env` file.
+## OpenAI API Setup
+Go to OpenAI API settings. Create a new API key and copy it to the `.env` file. If you're out of free trial credits, purchase $5 of credits.
 
-Second, go to OpenAI API settings. Create a new API key and copy it to the `.env` file. If you're out of free trial credits, purchase $5 of credits.
+## Pinecone VectorDB Setup
+Create a Pinecone account. Create a new index.
+- Index Name: something like "tobys-sandbox"
+- Configuration: Setup by model > text-embedding-3-small
+- Capacity Mode: serverless
+- Cloud Provider: doesn't matter
+- Region: default
+- Click "Create Index"
 
-# Test Your Environment
+# Test Your Environment  
 Open the folder "rag-mini-bootcamp" in VSCode. Open the folder in Dev Container mode by using Cmd/Ctrl + Shift + P > Dev Containers: Open Folder in Container. The first time, the container will take some time to build while it downloads the required packages.
 
-Once the container is finished building, open `./query_qa_rag_agent.ipynb` in VSCode. Click "Run All" and select the `venv` python environment if prompted. The notebook should display a GPT3.5 completion to the question about the paper. If you get an error, try to diagnose it or flag one of us for help.
+Once the container is finished building, open `./query_qa_rag_agent.ipynb` in VSCode. Click "Run All". The notebook should display a GPT3.5 completion to the question about the paper. If you get an error, try to diagnose it or flag one of us for help.
