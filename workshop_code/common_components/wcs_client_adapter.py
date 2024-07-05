@@ -1,6 +1,9 @@
+from __future__ import annotations
+from abc import ABC, abstractmethod
+from typing import List, Any
+from pydantic import BaseModel
 import os
 import weaviate
-from typing import List
 from weaviate.auth import AuthApiKey
 from weaviate.classes import config, data
 
@@ -10,7 +13,24 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 WCS_COLLECTION_NAME = "QaAgentRagChunks"
 COLLECTION_TEXT_KEY = "chunk"
 
-class WcsClientAdapter():
+class VectorDbClientAdapter(ABC):
+    @abstractmethod
+    def setup_index(self) -> None:
+        pass
+
+    @abstractmethod
+    def insert(self, text_splits: List[str], text_split_vectors: List[List[float]]) -> None:
+        pass
+
+    @abstractmethod
+    def retrieve(self, query_vector: List[float], k: int) -> List[str]:
+        pass
+
+    @abstractmethod
+    def count_entries(self) -> int:
+        pass
+
+class WcsClientAdapter(VectorDbClientAdapter):
 
   def setup_index(self) -> None:
     client = self._get_wcs_client() 
