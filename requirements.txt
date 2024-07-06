@@ -1,5 +1,6 @@
 bs4
 ipykernel
+ipywidgets
 jinja2
 lxml
 openai

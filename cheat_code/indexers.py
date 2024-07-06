@@ -2,7 +2,7 @@ from cheat_code.indexer_components.loaders import DocLoader
 from cheat_code.indexer_components.preprocessors import Preprocessor
 from cheat_code.common_components.vectorizers import Vectorizer
 from cheat_code.indexer_components.text_splitters import SimpleCharacterTextSplitter
-from cheat_code.common_components.vectordb_client_adapters import WcsClientAdapter
+from cheat_code.common_components.vectordb_client_adapters import PineconeClientAdapter
 
 CHUNK_SIZE = 250
 OVERLAP_SIZE = 25
@@ -10,7 +10,7 @@ OVERLAP_SIZE = 25
 class NaiveIndexer:
 
   def __init__(self, vectorizer: Vectorizer):
-    self._client_adapter = WcsClientAdapter()
+    self._client_adapter = PineconeClientAdapter()
     self._vectorizer = vectorizer
 
   def index(self, doc_uri: str) -> None:

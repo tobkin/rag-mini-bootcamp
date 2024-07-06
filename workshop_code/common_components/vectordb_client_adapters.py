@@ -5,13 +5,15 @@ from pydantic import BaseModel
 import os
 import weaviate
 from weaviate.auth import AuthApiKey
-from weaviate.classes import config, data
+# from weaviate.classes import config, data
+from pinecone import Pinecone
+from pinecone import ServerlessSpec
 
 WCS_URL = os.getenv("WCS_URL")
 WCS_API_KEY = os.getenv("WCS_API_KEY")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-WCS_COLLECTION_NAME = "QaAgentRagChunks"
-COLLECTION_TEXT_KEY = "chunk"
+INDEX_NAME = "textsplits"
 
 class VectorDbClientAdapter(ABC):
     @abstractmethod
@@ -30,18 +32,74 @@ class VectorDbClientAdapter(ABC):
     def count_entries(self) -> int:
         pass
 
+class PineconeClientAdapter(VectorDbClientAdapter):
+  
+  def setup_index(self) -> None:
+      client = Pinecone(api_key=PINECONE_API_KEY)
+      
+      if self._index_exists(INDEX_NAME):
+        client.delete_index(INDEX_NAME)
+      
+      client.create_index(
+        name=INDEX_NAME,
+        dimension=1536, # dimension of text-embedding-3-small output
+        metric="cosine",
+        spec=ServerlessSpec(
+          cloud="aws",
+          region="us-east-1"
+        )
+      )
+
+  def insert(self, text_splits: List[str], text_split_vectors: List[List[float]]) -> None:
+    client = Pinecone(api_key=PINECONE_API_KEY)
+    index = client.Index(INDEX_NAME)
+    vector_objs = []
+    for i in range(len(text_splits)):
+      obj = {
+        "id": f"{i}",
+        "values": text_split_vectors[i],
+        "metadata": { "text_split": text_splits[i] }
+      }
+      vector_objs.append(obj)
+    index.upsert(vector_objs)
+
+  def retrieve(self, query_vector: List[float], k: int) -> List[str]:
+    client = Pinecone(api_key=PINECONE_API_KEY)
+    index = client.Index(INDEX_NAME) 
+    response = index.query(vector=query_vector, top_k=k, include_metadata=True)
+    text_splits = []
+    for match in response.get("matches"):
+      text_split = match.get("metadata").get("text_split")
+      text_splits.append(text_split)
+    return text_splits
+
+  def count_entries(self) -> int:
+    client = Pinecone(api_key=PINECONE_API_KEY)
+    index = client.Index(INDEX_NAME) 
+    index_stats = index.describe_index_stats()
+    num_entries = index_stats.get("total_vector_count")
+    return num_entries
+    
+  def _index_exists(self, index_name: str) -> bool:
+    client = Pinecone(api_key=PINECONE_API_KEY)
+    indexes = client.list_indexes()
+    for index in indexes:
+      if index.get("name") == index_name:
+        return True
+    return False
+
 class WcsClientAdapter(VectorDbClientAdapter):
 
   def setup_index(self) -> None:
     client = self._get_wcs_client() 
     try:
-        if client.collections.exists(WCS_COLLECTION_NAME):
-            client.collections.delete(WCS_COLLECTION_NAME) 
+        if client.collections.exists(INDEX_NAME):
+            client.collections.delete(INDEX_NAME) 
         
         client.collections.create(
-            name=WCS_COLLECTION_NAME,
+            name=INDEX_NAME,
             properties=[
-                config.Property(name=COLLECTION_TEXT_KEY, data_type=config.DataType.TEXT),
+                config.Property(name="chunk", data_type=config.DataType.TEXT),
                 config.Property(name="chunk_index", data_type=config.DataType.INT),
             ]
         )
@@ -63,14 +121,14 @@ class WcsClientAdapter(VectorDbClientAdapter):
         )
         chunks_list.append(data_object)
     try:
-      client.collections.get(WCS_COLLECTION_NAME).data.insert_many(chunks_list)
+      client.collections.get(INDEX_NAME).data.insert_many(chunks_list)
     finally:
       client.close()
   
   def retrieve(self, query_vector: List[float], k: int) -> List[str]:
     client = self._get_wcs_client() 
     try:
-      all_chunks = client.collections.get(WCS_COLLECTION_NAME)
+      all_chunks = client.collections.get(INDEX_NAME)
       retrieved_chunks = all_chunks.query.near_vector(near_vector=query_vector, limit=k)
       retrieved_chunks_list = [obj.properties['chunk'] for obj in retrieved_chunks.objects]
       return retrieved_chunks_list
@@ -80,7 +138,7 @@ class WcsClientAdapter(VectorDbClientAdapter):
   def count_entries(self) -> int:
       client = self._get_wcs_client() 
       try:
-        response = client.collections.get(WCS_COLLECTION_NAME).aggregate.over_all(total_count=True)
+        response = client.collections.get(INDEX_NAME).aggregate.over_all(total_count=True)
         return response.total_count
       finally:
         client.close()
