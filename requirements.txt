@@ -1,4 +1,5 @@
 bs4
+couchbase
 ipykernel
 ipywidgets
 jinja2
