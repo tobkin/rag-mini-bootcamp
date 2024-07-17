@@ -3,10 +3,29 @@ FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
+ENV OPENSSL_ROOT_DIR=/usr/local/openssl
+ENV LDFLAGS="-L/usr/local/openssl/lib"
+ENV CPPFLAGS="-I/usr/local/openssl/include"
 
-# Install Git and other dependencies
-RUN apt-get update && apt-get install -y git && \
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    build-essential \
+    cmake \
+    libssl-dev \
+    wget && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install OpenSSL
+RUN mkdir -p /usr/local/openssl && \
+    cd /usr/local/openssl && \
+    wget https://www.openssl.org/source/openssl-1.1.1w.tar.gz && \
+    tar -xzf openssl-1.1.1w.tar.gz && \
+    cd openssl-1.1.1w && \
+    ./config --prefix=/usr/local/openssl && \
+    make && \
+    make install && \
+    rm -rf /usr/local/openssl/openssl-1.1.1w.tar.gz
 
 # Create and set the working directory
 WORKDIR /workspaces/rag-mini-bootcamp
@@ -14,9 +33,14 @@ WORKDIR /workspaces/rag-mini-bootcamp
 # Copy the requirements file into the container
 COPY requirements.txt .
 
+# Upgrade pip and setuptools to ensure PEP517 support
+RUN pip install --upgrade pip setuptools
+
 # Install the dependencies
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Copy the rest of the application code into the container
 COPY . .
+
+# Set the default command to run a shell
+CMD ["/bin/bash"]
