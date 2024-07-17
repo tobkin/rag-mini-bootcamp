@@ -8,7 +8,8 @@ from datetime import timedelta
 from typing import Any, List
 
 from couchbase.auth import PasswordAuthenticator
-from couchbase.cluster import Cluster, ClusterOptions
+from couchbase.cluster import Cluster
+from couchbase.options import ClusterOptions
 from couchbase.exceptions import CouchbaseException
 from couchbase.vector_search import VectorQuery, VectorSearch
 from pydantic import BaseModel
@@ -60,11 +61,16 @@ class CouchbaseClientAdapter(VectorDbClientAdapter):
         cluster, collection = self._initialize_cluster()
         try:
             # Execute a N1QL query to delete all documents in the collection
-            query = f"DELETE FROM `{CB_BUCKET_NAME}` WHERE `scope` = '{CB_SCOPE_NAME}' AND `collection` = '{CB_COLLECTION_NAME}'"
-            cluster.query(query)
+            query = f"DELETE FROM `{CB_BUCKET_NAME}`"
+            q_res = cluster.query(query)
+            
+            status = q_res.metadata().status()
+            print(f"Query status: {status}")
+            
             print("All documents in the collection have been deleted.")
         except CouchbaseException as e:
             print("Failed to delete documents:", e)
+            sys.exit()
 
     def _initialize_cluster(self):
         try:
@@ -77,7 +83,7 @@ class CouchbaseClientAdapter(VectorDbClientAdapter):
 
             bucket = cluster.bucket(CB_BUCKET_NAME)
             collection = bucket.scope(CB_SCOPE_NAME).collection(CB_COLLECTION_NAME)
-            return collection
+            return cluster, collection
         except Exception as e:
             traceback.print_exc()
             sys.exit("Failed to initialize the cluster or collection")
@@ -92,12 +98,13 @@ class CouchbaseClientAdapter(VectorDbClientAdapter):
             }
             vector_objs.append(obj)
 
-        collection = self._initialize_cluster()
+        _, collection = self._initialize_cluster()
         try:
             for obj in vector_objs:
                 collection.insert(obj["id"], obj)
         except CouchbaseException as e:
             print("Failed to insert document:", e)
+            sys.exit()
     
     def retrieve(self, query_vector: List[float], k: int) -> List[str]:
         cluster, collection = self._initialize_cluster()
@@ -122,18 +129,20 @@ class CouchbaseClientAdapter(VectorDbClientAdapter):
             return text_splits
         except CouchbaseException as e:
             print("Failed to retrieve documents:", e)
-            return []
+            sys.exit()
 
     def count_entries(self) -> int:
         cluster, collection = self._initialize_cluster()
         try:
             query = f"SELECT COUNT(*) AS count FROM `{CB_BUCKET_NAME}`.`{CB_SCOPE_NAME}`.`{CB_COLLECTION_NAME}`"
-            result = cluster.query(query).rows()
-            count = result[0]['count'] if result else 0
+            result = cluster.query(query)
+            count = 0
+            for row in result.rows():
+                count = row['count']
             return count
         except Exception as e:
             print("Failed to count documents:", e)
-            return None
+            return 0
         
     
 class PineconeClientAdapter(VectorDbClientAdapter):
