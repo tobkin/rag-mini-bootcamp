@@ -1,10 +1,8 @@
 {
   "type": "fulltext-index",
   "name": "textsplits",
-  "uuid": "7a352388f51d781d",
   "sourceType": "gocbcore",
   "sourceName": "rag-workshop",
-  "sourceUUID": "6c9d6e90931d849590ab96da12bd995b",
   "planParams": {
     "maxPartitionsPerPIndex": 1024,
     "indexPartitions": 1
