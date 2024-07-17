@@ -25,18 +25,14 @@ Understanding Naive RAG architecture is the first step towards understanding mor
 # Dev Machine Setup
 
 ## Install Docker
-Your development environment will be in a VSCode Dev Container to eliminate "works on my machine" issues. Due to variability in how individual developers configure their base OS, around 50% of course attendees have environment-related issues completing the tutorial if using their base OS instead of a container.
+Your development environment will be in a VSCode Dev Container to eliminate "works on my machine" issues. 
 
-On a clean OS configuration, Python venv will also work. If you are familiar with using venv and are confident your OS doesn't have a conflicting environment manager like conda persistent, you may use venv instead.
-
-Recent OS distributions no longer support system-level installation of Python packages.
-
-If you want to push your changes to your own fork, note that your SSH settings won't be copied to your Dev Container. So, you'll need to push your changes from outside the container on your local machine. Technically, SSH can be configured, but I didn't have time to figure out how to make SSH on Dev Container automatically work on both Windows and Mac.
+If you want to push your changes to your own fork, note that your SSH settings won't be copied to your Dev Container. Use a non-VSCode terminal to push your changes.
 
 If you want to inspect the environment configuration, check out the folder ".devcontainer/". Feel free to ask any questions.
 
 ## Install VSCode
-We will use VSCode for this tutorial because it supports both Python Notebooks and standard Python editing. Although other editors have their merits, VSCode is also the most standard editor in 2024. The containerized development environment is only tested to work with VSCode. You must use VSCode to get instructor or TA support during the workshop. 
+We will use VSCode for this tutorial because it supports both Python Notebooks and standard Python editing. Although other editors have their merits, VSCode is also the most standard editor in 2024. The containerized development environment is only tested to work with VSCode. If you want to use other editors like Pycharm, Jupyter, or Colab, you'll have to do some non-trivial devops work upfront.
 
 ## Install VSCode Remote Containers Extension
 You will use this extension to develop within the Docker container dev environment.
@@ -59,14 +55,6 @@ Microsoft Official Option:
 2. Open Ubuntu shell
 3. `apt install git`
 
-<!-- ## Install Python
-Check for a working Python installation by launching a terminal and run the following command:  
-```
-python3 --version
-```
-
-It should display the Python version you have installed. -->
-
 # Repo Setup
 
 ## Fork and Clone the Repo
@@ -75,33 +63,45 @@ It should display the Python version you have installed. -->
 3. Clone your forked repo with a terminal
 4. `cd` into the `rag-mini-bootcamp` repo folder
 
-<!-- ## Create Virtual Environment & Install Dependencies
-```
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-``` -->
-
 ## .env File Setup
-We will use OpenAI embeddings, GPT3.5, and Pinecone vector database for this tutorial, so you will need to securely store your API keys in a `.env` file. This file is in `.gitignore` so it doesn't accidentally get committed to the repo where your keys would be exposed.  
+We will use OpenAI embeddings, GPT3.5, and Couchbase Capella vector database for this tutorial, so you will need to securely store your API keys in a `.env` file. This file is in `.gitignore` so it doesn't accidentally get committed to the repo where your keys would be exposed.  
 
-Create a `.env` file in the root of the repo from this template:  
+Create a `.env` file in the root of the repo from this template. You will fill it in in the next steps.  
 ```
+# Replace this with Connection String from SDKs page in Couchbase console
+CB_ENDPOINT="couchbases://cb.xxxxxxxxxxxxxxxx.cloud.couchbase.com" 
+# From database access credentials in Couchbase console
+CB_USERNAME="RAG_WORKSHOP" 
+# From database access credentials in Couchbase console
+CB_PASSWORD="<<password>>" 
+# From the OpenAI API console
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-PINECONE_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 ## OpenAI API Setup
 Go to OpenAI API settings. Create a new API key and copy it to the `.env` file. If you're out of free trial credits, purchase $5 of credits.
 
-## Pinecone VectorDB Setup
-Create a Pinecone account. Create a new index.
-- Index Name: something like "tobys-sandbox"
-- Configuration: Setup by model > text-embedding-3-small
-- Capacity Mode: serverless
-- Cloud Provider: doesn't matter
-- Region: default
-- Click "Create Index"
+## Deploy Couchbase Trial Cluster
+1. Sign up for a Couchbase account. Select any cloud provider and region. Click "Deploy Now".
+2. [Trial - Cluster Console] Go to "Connect"
+3. [SDKs Page] Add the Public Connection String to your .env file like so: `COUCHBASE_CLUSTER_URI=couchbases://cb.xxxxxxxxxxxxxxxx.cloud.couchbase.com`
+4. [SDKs Page] Click the Allowed IP Addresses > Add Allowed IP > Allow Access from Anywhere > Add Allowed IP. 
+5. [SDKs Page] Click Database Access > Create Database Access. Database Access Name: RAG_WORKSHOP. Bucket: All Buckets. Scope: All Scopes. Access: Read/Write. 
+6. [SDKs Page] Select your database credentials
+7. [SDKs Page] Choose Python
+
+**Important notes if you adapt this configuration for production:**
+1. Only whitelist IPs that are trusted
+2. Use the principle of least priviledge when creating database access
+
+## Create Couchbase Vector Search Index
+1. Go to your console for Trial - Cluster
+2. Go to Data Tools > Search
+3. Click Create Search Index > Advanced Mode > Index Definition > Import from File
+4. Upload `couchbase-index-definition.json` from the root of the workshop repo
+5. Click Create Index
+
+Couchbase Reference Docs: [Import a Search Index Definition with the Capella UI](https://docs.couchbase.com/cloud/search/import-search-index.html)
 
 # Test Your Environment  
 Open the folder "rag-mini-bootcamp" in VSCode. Open the folder in Dev Container mode by using Cmd/Ctrl + Shift + P > Dev Containers: Open Folder in Container. The first time, the container will take some time to build while it downloads the required packages.

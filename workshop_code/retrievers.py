@@ -1,10 +1,10 @@
 from workshop_code.common_components.vectorizers import Vectorizer
-from workshop_code.common_components.vectordb_client_adapters import PineconeClientAdapter
+from workshop_code.common_components.vectordb_client_adapters import CouchbaseClientAdapter
 
 class NaiveRetriever:
   
   def __init__(self, vectorizer: Vectorizer):
-    self._client_adapter = PineconeClientAdapter()
+    self._client_adapter = CouchbaseClientAdapter()
     self._vectorizer = vectorizer
     
   def retrieve(self, query: str) -> str:
