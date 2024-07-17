@@ -1,23 +1,41 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
-from typing import List, Any
-from pydantic import BaseModel
+
 import os
+import sys
+import traceback
+from abc import ABC, abstractmethod
+from datetime import timedelta
+from typing import Any, List
+
+from couchbase.auth import PasswordAuthenticator
+from couchbase.cluster import Cluster, ClusterOptions
+from couchbase.exceptions import CouchbaseException
+from couchbase.vector_search import VectorQuery, VectorSearch
+from pydantic import BaseModel
+from pinecone import Pinecone, ServerlessSpec
 import weaviate
 from weaviate.auth import AuthApiKey
 # from weaviate.classes import config, data
-from pinecone import Pinecone
-from pinecone import ServerlessSpec
 
+# Couchbase
+CB_ENDPOINT=os.getenv("CB_ENDPOINT")
+CB_USERNAME=os.getenv("CB_USERNAME")
+CB_PASSWORD=os.getenv("CB_PASSWORD")
+CB_BUCKET_NAME = "rag-workshop"
+CB_SCOPE_NAME = "_default"
+CB_COLLECTION_NAME = "_default"
+# Weaviate
 WCS_URL = os.getenv("WCS_URL")
 WCS_API_KEY = os.getenv("WCS_API_KEY")
+# Pinecone
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# Common
 INDEX_NAME = "textsplits"
 
 class VectorDbClientAdapter(ABC):
     @abstractmethod
-    def setup_index(self) -> None:
+    def reset_index(self) -> None:
         pass
 
     @abstractmethod
@@ -32,9 +50,95 @@ class VectorDbClientAdapter(ABC):
     def count_entries(self) -> int:
         pass
 
+# SDK Docs: https://docs.couchbase.com/sdk-api/couchbase-python-client/couchbase_api/couchbase_search.html#
+class CouchbaseClientAdapter(VectorDbClientAdapter):
+  
+    # Capella only supports setting up the index via the cloud console,
+    # so unlike other instances of this method, it does not delete and
+    # re-setup the index. It only clears the documents in the index.
+    def reset_index(self) -> None:
+        cluster, collection = self._initialize_cluster()
+        try:
+            # Execute a N1QL query to delete all documents in the collection
+            query = f"DELETE FROM `{CB_BUCKET_NAME}` WHERE `scope` = '{CB_SCOPE_NAME}' AND `collection` = '{CB_COLLECTION_NAME}'"
+            cluster.query(query)
+            print("All documents in the collection have been deleted.")
+        except CouchbaseException as e:
+            print("Failed to delete documents:", e)
+
+    def _initialize_cluster(self):
+        try:
+            auth = PasswordAuthenticator(CB_USERNAME, CB_PASSWORD)
+            options = ClusterOptions(auth)
+            options.apply_profile("wan_development")
+
+            cluster = Cluster(CB_ENDPOINT, options)
+            cluster.wait_until_ready(timedelta(seconds=5))
+
+            bucket = cluster.bucket(CB_BUCKET_NAME)
+            collection = bucket.scope(CB_SCOPE_NAME).collection(CB_COLLECTION_NAME)
+            return collection
+        except Exception as e:
+            traceback.print_exc()
+            sys.exit("Failed to initialize the cluster or collection")
+
+    def insert(self, text_splits: List[str], text_split_vectors: List[List[float]]) -> None:
+        vector_objs = []
+        for i, text_split in enumerate(text_splits):
+            obj = {
+                "id": f"{i}",
+                "vector_1536_text_embedding_3_small": text_split_vectors[i],
+                "text_split": text_split
+            }
+            vector_objs.append(obj)
+
+        collection = self._initialize_cluster()
+        try:
+            for obj in vector_objs:
+                collection.insert(obj["id"], obj)
+        except CouchbaseException as e:
+            print("Failed to insert document:", e)
+    
+    def retrieve(self, query_vector: List[float], k: int) -> List[str]:
+        cluster, collection = self._initialize_cluster()
+        
+        try:
+            # Create a VectorQuery
+            vector_query = VectorQuery.create(
+                field_name="vector_1536_text_embedding_3_small",
+                vector=query_vector,
+                num_candidates=k
+            )
+
+            # Create a VectorSearch from the VectorQuery
+            vector_search = VectorSearch.from_vector_query(vector_query)
+
+            # Execute the search
+            query = f"SELECT text_split FROM `{CB_BUCKET_NAME}` WHERE SEARCH({vector_search})"
+            result = cluster.query(query).rows()
+
+            # Extract and return the text_splits from the results
+            text_splits = [row['text_split'] for row in result]
+            return text_splits
+        except CouchbaseException as e:
+            print("Failed to retrieve documents:", e)
+            return []
+
+    def count_entries(self) -> int:
+        cluster, collection = self._initialize_cluster()
+        try:
+            query = f"SELECT COUNT(*) AS count FROM `{CB_BUCKET_NAME}`.`{CB_SCOPE_NAME}`.`{CB_COLLECTION_NAME}`"
+            result = cluster.query(query).rows()
+            count = result[0]['count'] if result else 0
+            return count
+        except Exception as e:
+            print("Failed to count documents:", e)
+            return None
+        
+    
 class PineconeClientAdapter(VectorDbClientAdapter):
   
-  def setup_index(self) -> None:
+  def reset_index(self) -> None:
       client = Pinecone(api_key=PINECONE_API_KEY)
       
       if self._index_exists(INDEX_NAME):
@@ -90,7 +194,7 @@ class PineconeClientAdapter(VectorDbClientAdapter):
 
 class WcsClientAdapter(VectorDbClientAdapter):
 
-  def setup_index(self) -> None:
+  def reset_index(self) -> None:
     client = self._get_wcs_client() 
     try:
         if client.collections.exists(INDEX_NAME):

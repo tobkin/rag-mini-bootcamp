@@ -21,6 +21,6 @@ class NaiveIndexer:
     cleaned_text = preprocessor.get_text(doc_content)
     text_splits = text_splitter.split_text(cleaned_text)
     text_split_vectors = self._vectorizer.vectorize_text_splits(text_splits)
-    self._client_adapter.setup_index()
+    self._client_adapter.reset_index()
     self._client_adapter.insert(text_splits, text_split_vectors) 
     
