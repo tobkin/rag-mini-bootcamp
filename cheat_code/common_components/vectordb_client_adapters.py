@@ -11,6 +11,8 @@ from couchbase.auth import PasswordAuthenticator
 from couchbase.cluster import Cluster
 from couchbase.options import ClusterOptions
 from couchbase.exceptions import CouchbaseException
+import couchbase.search as search
+from couchbase.options import SearchOptions
 from couchbase.vector_search import VectorQuery, VectorSearch
 from pydantic import BaseModel
 from pinecone import Pinecone, ServerlessSpec
@@ -60,14 +62,14 @@ class CouchbaseClientAdapter(VectorDbClientAdapter):
     def reset_index(self) -> None:
         cluster, collection = self._initialize_cluster()
         try:
+            # FIXME: this delete query doesn't work
             # Execute a N1QL query to delete all documents in the collection
             query = f"DELETE FROM `{CB_BUCKET_NAME}`"
             q_res = cluster.query(query)
             
-            status = q_res.metadata().status()
-            print(f"Query status: {status}")
-            
-            print("All documents in the collection have been deleted.")
+            # status = q_res.metadata().status()
+            # print(f"Query status: {status}")
+            # print("All documents in the collection have been deleted.")
         except CouchbaseException as e:
             print("Failed to delete documents:", e)
             sys.exit()
@@ -101,35 +103,50 @@ class CouchbaseClientAdapter(VectorDbClientAdapter):
         _, collection = self._initialize_cluster()
         try:
             for obj in vector_objs:
-                collection.insert(obj["id"], obj)
+                # FIXME: using an upsert instead of an insert because delete query above doesnt work
+                # collection.insert(obj["id"], obj)
+                collection.upsert(obj["id"], obj)
         except CouchbaseException as e:
             print("Failed to insert document:", e)
             sys.exit()
     
-    def retrieve(self, query_vector: List[float], k: int) -> List[str]:
+    def retrieve(self, query_vector: List[float], k: int = 4) -> List[Tuple[Document, float]]:
         cluster, collection = self._initialize_cluster()
-        
+        bucket = cluster.bucket(CB_BUCKET_NAME)
+        scope = bucket.scope(CB_SCOPE_NAME)
+
+        fields = ["*"]
+
+        search_req = search.SearchRequest.create(
+            VectorSearch.from_vector_query(
+                VectorQuery(
+                    'vector_1536_text_embedding_3_small',
+                    query_vector,
+                    k,
+                )
+            )
+        )
         try:
-            # Create a VectorQuery
-            vector_query = VectorQuery.create(
-                field_name="vector_1536_text_embedding_3_small",
-                vector=query_vector,
-                num_candidates=k
+            search_iter = scope.search(
+                index=INDEX_NAME,
+                request=search_req,
+                options=SearchOptions(
+                    limit=k,
+                    fields=fields,
+                ),
             )
 
-            # Create a VectorSearch from the VectorQuery
-            vector_search = VectorSearch.from_vector_query(vector_query)
+            text_splits = []
 
-            # Execute the search
-            query = f"SELECT text_split FROM `{CB_BUCKET_NAME}` WHERE SEARCH({vector_search})"
-            result = cluster.query(query).rows()
+            # Parse the results
+            for row in search_iter.rows():
+                key = row.id
+                text_split = collection.get(key).value.get('text_split')
+                text_splits.append(text_split)
+        except Exception as e:
+            raise ValueError(f"Search failed with error: {e}")
 
-            # Extract and return the text_splits from the results
-            text_splits = [row['text_split'] for row in result]
-            return text_splits
-        except CouchbaseException as e:
-            print("Failed to retrieve documents:", e)
-            sys.exit()
+        return text_splits
 
     def count_entries(self) -> int:
         cluster, collection = self._initialize_cluster()

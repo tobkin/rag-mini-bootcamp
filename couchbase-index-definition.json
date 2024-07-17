@@ -1,6 +1,6 @@
 {
   "type": "fulltext-index",
-  "name": "textsplits",
+  "name": "rag-workshop._default.textsplits",
   "sourceType": "gocbcore",
   "sourceName": "rag-workshop",
   "planParams": {
@@ -20,7 +20,7 @@
       "default_datetime_parser": "dateTimeOptional",
       "default_field": "_all",
       "default_mapping": {
-        "dynamic": false,
+        "dynamic": true,
         "enabled": false
       },
       "default_type": "_default",
@@ -30,9 +30,35 @@
       "type_field": "_type",
       "types": {
         "_default._default": {
-          "dynamic": false,
+          "dynamic": true,
           "enabled": true,
           "properties": {
+            "id": {
+              "dynamic": false,
+              "enabled": true,
+              "fields": [
+                {
+                  "analyzer": "en",
+                  "index": true,
+                  "name": "id",
+                  "store": true,
+                  "type": "text"
+                }
+              ]
+            },
+            "text_split": {
+              "dynamic": false,
+              "enabled": true,
+              "fields": [
+                {
+                  "analyzer": "en",
+                  "index": true,
+                  "name": "text_split",
+                  "store": true,
+                  "type": "text"
+                }
+              ]
+            },
             "vector_1536_text_embedding_3_small": {
               "dynamic": false,
               "enabled": true,
